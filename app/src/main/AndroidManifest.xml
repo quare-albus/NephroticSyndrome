@@ -12,10 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NephroticSyndrome">
         <activity
-            android:name=".LoginAndSignup.LogInActivity"
-            android:exported="false"
-            android:theme="@style/Theme.NephroticSyndrome" />
-        <activity
             android:name=".MainActivity2"
             android:exported="false"
             android:theme="@style/Theme.NephroticSyndrome" />

@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
-class LoginAndSignupViewModel : ViewModel() {
+import java.math.BigInteger
+import java.security.MessageDigest
+
+class AuthViewModel : ViewModel() {
     private val _isPt = MutableStateFlow<Boolean>(true)
     val isPt: StateFlow<Boolean> = _isPt
 
@@ -97,12 +100,15 @@ class LoginAndSignupViewModel : ViewModel() {
     }
 
     fun addNewPatient(patientAuth: PatientAuth, uid: String){
+        val userCode = generateDeterministicCode(patientAuth.user.name, patientAuth.user.userType.toString())
         //creating hashmap
         val patientInfoHash = hashMapOf(
             "name" to patientAuth.user.name,
             "age" to patientAuth.user.age,
             "sex" to patientAuth.user.sex,
-            "userType" to patientAuth.user.userType.toString()
+            "userType" to patientAuth.user.userType.toString(),
+            "uid" to uid,
+            "userCode" to userCode
         )
 
         //setting up instance
@@ -112,8 +118,8 @@ class LoginAndSignupViewModel : ViewModel() {
         db.collection("UserRegister")
             .document(uid)
             .set(patientInfoHash)
-            .addOnSuccessListener { documentReference ->
-                Log.d(TAG, "DocumentSnapshot added")
+            .addOnSuccessListener {
+                Log.d(TAG, "DocumentSnapshot added for uid: $uid with code: $userCode")
                 _isProcComplete.update { true }
             }
             .addOnFailureListener { e ->
@@ -121,11 +127,22 @@ class LoginAndSignupViewModel : ViewModel() {
             }
     }
 
+    private fun generateDeterministicCode(name: String, userType: String): String {
+        val input = "$name$userType${System.currentTimeMillis()}"
+        val hash = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
+        val bigInt = BigInteger(1, hash)
+        return bigInt.toString(36).padStart(10, '0').takeLast(10).uppercase()
+    }
+
     fun switchToSignUp() {
         _isSignUp.update { true }
     }
     fun switchToSignIn() {
         _isSignUp.update { false }
+    }
+
+    fun resetProcComplete() {
+        _isProcComplete.update { false }
     }
 
 }

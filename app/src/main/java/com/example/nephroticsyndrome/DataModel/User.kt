@@ -5,5 +5,6 @@ data class User (
     val age: Int,
     val sex: String,
     val uid: String = "",
-    val userType: UserType = UserType.Unknown
+    val userType: UserType = UserType.Unknown,
+    val userCode: String = ""
 )

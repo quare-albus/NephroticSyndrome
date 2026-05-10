@@ -15,11 +15,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class MainViewModel : ViewModel() {
-    private val _patientRecords = MutableStateFlow(mutableListOf<PatientRecord>())
+    private val _patientRecords = MutableStateFlow<List<PatientRecord>>(emptyList())
     val patientRecords: StateFlow<List<PatientRecord>> = _patientRecords.asStateFlow()
 
     private val _userInfo = MutableStateFlow(User("Kiddo", 18, "Female", ""))
     val userInfo: StateFlow<User> = _userInfo.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
 
     init {
@@ -53,21 +56,24 @@ class MainViewModel : ViewModel() {
 
     }
 
-    private fun getUserInfo() {
+    fun getUserInfo() {
+        val currentUser = Firebase.auth.currentUser ?: return
+        val uid = currentUser.uid
+        _isLoading.update { true }
         //setting up instance
         val db = Firebase.firestore
-        val uid = Firebase.auth.currentUser!!.uid
         Log.d("Patient Id", uid)
-        //getting patient info from database
+        //getting patient info from database directly by uid
         db.collection("UserRegister")
             .document(uid)
             .get()
             .addOnSuccessListener { document ->
-                if (document != null) {
+                if (document.exists()) {
                     Log.d(
                         "Debug Get Patient Info #65Main",
                         "DocumentSnapshot data: ${document.data}"
                     )
+                    val userCode = document.data?.get("userCode")?.toString() ?: ""
                     if (document.data?.get("name") != null) {
                         _userInfo.update {
                             User(
@@ -75,50 +81,56 @@ class MainViewModel : ViewModel() {
                                 age = document.data?.get("age").toString().toInt(),
                                 sex = document.data?.get("sex").toString(),
                                 uid = uid,
-                                userType = document.data?.get("userType").toString().toUserType()
+                                userType = document.data?.get("userType").toString().toUserType(),
+                                userCode = userCode
                             )
                         }
                     }
 
-                    getPatientRecords()
+                    getPatientRecords(uid)
 
                 } else {
                     Log.d("Debug Get Patient Info #65Main", "No such document")
+                    _isLoading.update { false }
                 }
+            }
+            .addOnFailureListener {
+                _isLoading.update { false }
             }
     }
 
-    private fun getPatientRecords() {
+    private fun getPatientRecords(uid: String) {
         //setting up instance
         val db = Firebase.firestore
-        val uid = _userInfo.value.uid
 
-        //getting patient records from database
+        //getting patient records from database using uid as document ID
         db.collection("UserRegister")
             .document(uid)
             .collection("Records")
             .get()
             .addOnSuccessListener{documents ->
             try {
-                _patientRecords.value = mutableListOf()
+                val records = mutableListOf<PatientRecord>()
                 for (document in documents) {
                     Log.d("Debug Get Patient Records #65Main", "${document.id} => ${document.data}")
-                    _patientRecords.update { old ->
-                        (old + PatientRecord(
-                            date = document.data["date"].toString(),
-                            time = document.data["time"].toString(),
-                            urineProtein = document.data["urineProtein"].toString(),
-                            medication = document.data["medication"].toString(),
-                            symptoms = document.data["symptoms"].toString()
-                        )) as MutableList<PatientRecord>
-                    }
+                    records.add(PatientRecord(
+                        date = document.data["date"].toString(),
+                        time = document.data["time"].toString(),
+                        urineProtein = document.data["urineProtein"].toString(),
+                        medication = document.data["medication"].toString(),
+                        symptoms = document.data["symptoms"].toString()
+                    ))
                 }
+                _patientRecords.value = records
             } catch (e: Exception) {
                 Log.d("Debug Get Patient Records #65Main", "Error getting documents.", e)
+            } finally {
+                _isLoading.update { false }
             }
         }
             .addOnFailureListener { exception ->
                 Log.w("Debug Get Patient Records #65Main", "Error getting documents.", exception)
+                _isLoading.update { false }
             }
     }
 
@@ -126,7 +138,7 @@ class MainViewModel : ViewModel() {
     fun AddPatientRecord(patientRecord: PatientRecord) {
         // update local record
         _patientRecords.update { old ->
-            (old + patientRecord) as MutableList<PatientRecord>
+            old + patientRecord
         }
 
         //update in firestore
@@ -167,9 +179,14 @@ class MainViewModel : ViewModel() {
 
     //deletes user and redirects to sign in page with the redirect() set to the sign in Page
     fun deleteUser(redirect: () -> Unit) {
-        Firebase.auth.currentUser!!.delete()
-        // redirect() redirects to the sign in page after deleting the user
-        redirect()
+        val user = Firebase.auth.currentUser
+        if (user != null) {
+            user.delete().addOnCompleteListener {
+                redirect()
+            }
+        } else {
+            redirect()
+        }
     }
 }
 
