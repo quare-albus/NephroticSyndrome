@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.example.nephroticsyndrome.DataModel.User
 import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.LoginAndSignup.AuthScreen
 import com.example.nephroticsyndrome.LoginAndSignup.AuthViewModel
@@ -75,7 +76,12 @@ fun MainScreen(
 
     val userInfo by mainViewModel.userInfo.collectAsState()
     val patientRecords by mainViewModel.patientRecords.collectAsState()
+    val selectedPatientRecords by mainViewModel.selectedPatientRecords.collectAsState()
     val pendingRequests by mainViewModel.pendingRequests.collectAsState()
+    val pendingRequestsInfo by mainViewModel.pendingRequestsInfo.collectAsState()
+    val approvedPatientsInfo by mainViewModel.approvedPatientsInfo.collectAsState()
+
+    var selectedPatient by remember { mutableStateOf<User?>(null) }
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -100,12 +106,14 @@ fun MainScreen(
                 onHomeClick = {
                     scope.launch {
                         doctorScreen = "Home"
+                        selectedPatient = null
                         drawerState.close()
                     }
                 },
                 onPendingRequestsClick = {
                     scope.launch {
                         doctorScreen = "PendingRequests"
+                        selectedPatient = null
                         drawerState.close()
                     }
                 }
@@ -145,10 +153,25 @@ fun MainScreen(
                     )
                 } else {
                     if (doctorScreen == "Home") {
-                        DoctorRecordScreen(userInfo)
+                        if (selectedPatient != null) {
+                            PatientRecordScreen(
+                                user = selectedPatient!!,
+                                records = selectedPatientRecords,
+                                onBack = { selectedPatient = null }
+                            )
+                        } else {
+                            DoctorRecordScreen(
+                                user = userInfo,
+                                ptList = approvedPatientsInfo,
+                                onPatientClick = { patient ->
+                                    mainViewModel.fetchSelectedPatientRecords(patient.uid)
+                                    selectedPatient = patient
+                                }
+                            )
+                        }
                     } else {
                         PendingRequestsScreen(
-                            pendingRequests = pendingRequests,
+                            pendingRequests = pendingRequestsInfo,
                             onApprove = { mainViewModel.approvePatient(it) }
                         )
                     }

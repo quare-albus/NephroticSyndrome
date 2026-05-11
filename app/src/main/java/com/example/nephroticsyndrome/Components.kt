@@ -1,6 +1,7 @@
 package com.example.nephroticsyndrome
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -65,13 +67,24 @@ import com.example.nephroticsyndrome.DataModel.PatientRecord
 fun PatientRecordScreen(
     user: User,
     records: List<PatientRecord>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        if (onBack != null) {
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Back to Patients")
+            }
+        }
         PatientInfoCard(user)
         Spacer(modifier = Modifier.height(16.dp))
         PatientTable(records)
@@ -480,7 +493,8 @@ fun NavDrawerContent(
 
 @Composable
 fun PtLazyMatrix(
-    PtList: List<User>
+    PtList: List<User>,
+    onPatientClick: (User) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 128.dp),
@@ -491,18 +505,20 @@ fun PtLazyMatrix(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(PtList) { Pt ->
-            PtCard(Pt)
+            PtCard(Pt, onClick = { onPatientClick(Pt) })
         }
     }
 }
 
 @Composable
 fun PtCard(
-    user: User
+    user: User,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -529,7 +545,9 @@ fun PtCard(
 
 @Composable
 fun DoctorRecordScreen(
-    user: User
+    user: User,
+    ptList: List<User>,
+    onPatientClick: (User) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Card(
@@ -557,24 +575,13 @@ fun DoctorRecordScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        val ptList = listOf(
-            User("Ethan Singh", 55, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male"),
-            User("Mia Garcia", 56, "Male")
-        )
-
-        PtLazyMatrix(ptList)
+        PtLazyMatrix(ptList, onPatientClick)
     }
 }
 
 @Composable
 fun PendingRequestsScreen(
-    pendingRequests: List<String>,
+    pendingRequests: List<User>,
     onApprove: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -600,8 +607,8 @@ fun PendingRequestsScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(pendingRequests) { patientCode ->
-                    PendingRequestItem(patientCode, onApprove)
+                items(pendingRequests) { patient ->
+                    PendingRequestItem(patient, onApprove)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -610,11 +617,8 @@ fun PendingRequestsScreen(
 }
 
 @Composable
-fun PendingRequestItem(patientCode: String, onApprove: (String) -> Unit) {
-    Log.d("PendingRequestItem", patientCode)
-    Text(text = patientCode,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(bottom = 8.dp))
+fun PendingRequestItem(user: User, onApprove: (String) -> Unit) {
+    Log.d("PendingRequestItem", user.uid)
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -624,8 +628,19 @@ fun PendingRequestItem(patientCode: String, onApprove: (String) -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Patient Code: $patientCode", style = MaterialTheme.typography.bodyLarge)
-            Button(onClick = { onApprove(patientCode) }) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${user.sex} · Age ${user.age}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Button(onClick = { onApprove(user.uid) }) {
                 Text("Approve")
             }
         }

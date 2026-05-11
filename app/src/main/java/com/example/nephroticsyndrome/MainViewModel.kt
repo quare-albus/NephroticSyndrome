@@ -8,6 +8,7 @@ import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.DataModel.toUserType
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,19 @@ class MainViewModel : ViewModel() {
 
     private val _pendingRequests = MutableStateFlow<List<String>>(emptyList())
     val pendingRequests: StateFlow<List<String>> = _pendingRequests.asStateFlow()
+
+    private val _pendingRequestsInfo = MutableStateFlow<List<User>>(emptyList())
+    val pendingRequestsInfo: StateFlow<List<User>> = _pendingRequestsInfo.asStateFlow()
+
+    private var lastPendingUids: List<String> = emptyList()
+
+    private val _approvedPatientsInfo = MutableStateFlow<List<User>>(emptyList())
+    val approvedPatientsInfo: StateFlow<List<User>> = _approvedPatientsInfo.asStateFlow()
+
+    private val _selectedPatientRecords = MutableStateFlow<List<PatientRecord>>(emptyList())
+    val selectedPatientRecords: StateFlow<List<PatientRecord>> = _selectedPatientRecords.asStateFlow()
+
+    private var lastApprovedPatientCodes: List<String> = emptyList()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -157,12 +171,102 @@ class MainViewModel : ViewModel() {
                 if (snapshot != null && snapshot.exists()) {
                     val requests = snapshot.get("pendingRequests") as? List<String> ?: emptyList()
                     _pendingRequests.value = requests
+                    fetchPendingRequestsInfo(requests)
+
+                    val approved = snapshot.get("approvedPatients") as? List<String> ?: emptyList()
+                    fetchApprovedPatientsInfo(approved)
                 }
                 _isLoading.update { false }
             }
     }
 
-    fun approvePatient(patientCode: String) {
+    private fun fetchPendingRequestsInfo(uids: List<String>) {
+        if (uids == lastPendingUids) return
+        lastPendingUids = uids
+
+        if (uids.isEmpty()) {
+            _pendingRequestsInfo.value = emptyList()
+            return
+        }
+
+        val db = Firebase.firestore
+        db.collection("UserRegister")
+            .whereIn(FieldPath.documentId(), uids)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val users = querySnapshot.documents.map { doc ->
+                    User(
+                        name = doc.getString("name") ?: "",
+                        age = doc.getLong("age")?.toInt() ?: 0,
+                        sex = doc.getString("sex") ?: "",
+                        uid = doc.id,
+                        userType = doc.getString("userType").toString().toUserType(),
+                        userCode = doc.getString("userCode") ?: ""
+                    )
+                }
+                _pendingRequestsInfo.value = users
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainViewModel", "Error fetching pending requests info", e)
+            }
+    }
+
+    private fun fetchApprovedPatientsInfo(patientUids: List<String>) {
+        if (patientUids == lastApprovedPatientCodes) return
+        lastApprovedPatientCodes = patientUids
+
+        if (patientUids.isEmpty()) {
+            _approvedPatientsInfo.value = emptyList()
+            return
+        }
+
+        val db = Firebase.firestore
+        // Note: whereIn is limited to 10 items
+        db.collection("UserRegister")
+            .whereIn(FieldPath.documentId(), patientUids)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val users = querySnapshot.documents.map { doc ->
+                    User(
+                        name = doc.getString("name") ?: "",
+                        age = doc.getLong("age")?.toInt() ?: 0,
+                        sex = doc.getString("sex") ?: "",
+                        uid = doc.id,
+                        userType = doc.getString("userType").toString().toUserType(),
+                        userCode = doc.getString("userCode") ?: ""
+                    )
+                }
+                _approvedPatientsInfo.value = users
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainViewModel", "Error fetching approved patients info", e)
+            }
+    }
+
+    fun fetchSelectedPatientRecords(uid: String) {
+        val db = Firebase.firestore
+        db.collection("UserRegister")
+            .document(uid)
+            .collection("Records")
+            .get()
+            .addOnSuccessListener { documents ->
+                val records = documents.map { document ->
+                    PatientRecord(
+                        date = document.data["date"].toString(),
+                        time = document.data["time"].toString(),
+                        urineProtein = document.data["urineProtein"].toString(),
+                        medication = document.data["medication"].toString(),
+                        symptoms = document.data["symptoms"].toString()
+                    )
+                }
+                _selectedPatientRecords.value = records
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainViewModel", "Error fetching selected patient records", e)
+            }
+    }
+
+    fun approvePatient(patientUid: String) {
         val db = Firebase.firestore
         val doctorUid = _userInfo.value.uid
 
@@ -172,11 +276,11 @@ class MainViewModel : ViewModel() {
         db.collection("UserRegister")
             .document(doctorUid)
             .update(
-                "approvedPatients", FieldValue.arrayUnion(patientCode),
-                "pendingRequests", FieldValue.arrayRemove(patientCode)
+                "approvedPatients", FieldValue.arrayUnion(patientUid),
+                "pendingRequests", FieldValue.arrayRemove(patientUid)
             )
             .addOnSuccessListener {
-                Log.d("ApprovePatient", "Patient $patientCode approved and removed from pending")
+                Log.d("ApprovePatient", "Patient $patientUid approved and removed from pending")
             }
             .addOnFailureListener { e ->
                 Log.e("ApprovePatient", "Error approving patient", e)
@@ -240,10 +344,10 @@ class MainViewModel : ViewModel() {
 
     fun requestDoctor(doctorCode: String) {
         val db = Firebase.firestore
-        val patientCode = _userInfo.value.userCode
+        val patientUid = _userInfo.value.uid
 
-        if (patientCode.isEmpty()) {
-            Log.e("RequestDoctor", "Patient userCode is empty")
+        if (patientUid.isEmpty()) {
+            Log.e("RequestDoctor", "Patient UID is empty")
             return
         }
 
@@ -260,15 +364,11 @@ class MainViewModel : ViewModel() {
                         // Add patient to doctor's pendingRequests array
                         db.collection("UserRegister")
                             .document(doctorUid)
-                            .update("pendingRequests", FieldValue.arrayUnion(patientCode))
+                            .update("pendingRequests", FieldValue.arrayUnion(patientUid))
                             .addOnSuccessListener {
                                 Log.d("RequestDoctor", "Successfully sent request to doctor $doctorCode ($doctorUid)")
                             }
                             .addOnFailureListener { e ->
-                                // If document doesn't have the field yet, we might need to set it first or use set with merge
-                                // But update with arrayUnion usually works if the document exists. 
-                                // To be safe, if update fails because field doesn't exist, we could handle it, 
-                                // but Firestore handles arrayUnion on non-existent fields by creating them.
                                 Log.e("RequestDoctor", "Failed to send request", e)
                             }
                     } else {
