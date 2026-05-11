@@ -8,6 +8,7 @@ import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.DataModel.toUserType
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,9 @@ class MainViewModel : ViewModel() {
 
     private val _userInfo = MutableStateFlow(User("Kiddo", 18, "Female", ""))
     val userInfo: StateFlow<User> = _userInfo.asStateFlow()
+
+    private val _pendingRequests = MutableStateFlow<List<String>>(emptyList())
+    val pendingRequests: StateFlow<List<String>> = _pendingRequests.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -87,7 +91,11 @@ class MainViewModel : ViewModel() {
                         }
                     }
 
-                    getPatientRecords(uid)
+                    if (userInfo.value.userType == UserType.Doctor) {
+                        getPendingRequests(uid)
+                    } else {
+                        getPatientRecords(uid)
+                    }
 
                 } else {
                     Log.d("Debug Get Patient Info #65Main", "No such document")
@@ -108,29 +116,70 @@ class MainViewModel : ViewModel() {
             .document(uid)
             .collection("Records")
             .get()
-            .addOnSuccessListener{documents ->
-            try {
-                val records = mutableListOf<PatientRecord>()
-                for (document in documents) {
-                    Log.d("Debug Get Patient Records #65Main", "${document.id} => ${document.data}")
-                    records.add(PatientRecord(
-                        date = document.data["date"].toString(),
-                        time = document.data["time"].toString(),
-                        urineProtein = document.data["urineProtein"].toString(),
-                        medication = document.data["medication"].toString(),
-                        symptoms = document.data["symptoms"].toString()
-                    ))
+            .addOnSuccessListener { documents ->
+                try {
+                    val records = mutableListOf<PatientRecord>()
+                    for (document in documents) {
+                        Log.d("Debug Get Patient Records #65Main", "${document.id} => ${document.data}")
+                        records.add(
+                            PatientRecord(
+                                date = document.data["date"].toString(),
+                                time = document.data["time"].toString(),
+                                urineProtein = document.data["urineProtein"].toString(),
+                                medication = document.data["medication"].toString(),
+                                symptoms = document.data["symptoms"].toString()
+                            )
+                        )
+                    }
+                    _patientRecords.value = records
+                } catch (e: Exception) {
+                    Log.d("Debug Get Patient Records #65Main", "Error getting documents.", e)
+                } finally {
+                    _isLoading.update { false }
                 }
-                _patientRecords.value = records
-            } catch (e: Exception) {
-                Log.d("Debug Get Patient Records #65Main", "Error getting documents.", e)
-            } finally {
-                _isLoading.update { false }
             }
-        }
             .addOnFailureListener { exception ->
                 Log.w("Debug Get Patient Records #65Main", "Error getting documents.", exception)
                 _isLoading.update { false }
+            }
+    }
+
+    private fun getPendingRequests(doctorUid: String) {
+        val db = Firebase.firestore
+        db.collection("UserRegister")
+            .document(doctorUid)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("PendingRequests", "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val requests = snapshot.get("pendingRequests") as? List<String> ?: emptyList()
+                    _pendingRequests.value = requests
+                }
+                _isLoading.update { false }
+            }
+    }
+
+    fun approvePatient(patientCode: String) {
+        val db = Firebase.firestore
+        val doctorUid = _userInfo.value.uid
+
+        if (doctorUid.isEmpty()) return
+
+        // Add to approvedPatients array and remove from pendingRequests array
+        db.collection("UserRegister")
+            .document(doctorUid)
+            .update(
+                "approvedPatients", FieldValue.arrayUnion(patientCode),
+                "pendingRequests", FieldValue.arrayRemove(patientCode)
+            )
+            .addOnSuccessListener {
+                Log.d("ApprovePatient", "Patient $patientCode approved and removed from pending")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ApprovePatient", "Error approving patient", e)
             }
     }
 
@@ -187,6 +236,51 @@ class MainViewModel : ViewModel() {
         } else {
             redirect()
         }
+    }
+
+    fun requestDoctor(doctorCode: String) {
+        val db = Firebase.firestore
+        val patientCode = _userInfo.value.userCode
+
+        if (patientCode.isEmpty()) {
+            Log.e("RequestDoctor", "Patient userCode is empty")
+            return
+        }
+
+        // Search for doctor by userCode field
+        db.collection("UserRegister")
+            .whereEqualTo("userCode", doctorCode)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val doctorDocument = querySnapshot.documents[0]
+                    val doctorUid = doctorDocument.id
+
+                    if (doctorDocument.getString("userType") == UserType.Doctor.toString()) {
+                        // Add patient to doctor's pendingRequests array
+                        db.collection("UserRegister")
+                            .document(doctorUid)
+                            .update("pendingRequests", FieldValue.arrayUnion(patientCode))
+                            .addOnSuccessListener {
+                                Log.d("RequestDoctor", "Successfully sent request to doctor $doctorCode ($doctorUid)")
+                            }
+                            .addOnFailureListener { e ->
+                                // If document doesn't have the field yet, we might need to set it first or use set with merge
+                                // But update with arrayUnion usually works if the document exists. 
+                                // To be safe, if update fails because field doesn't exist, we could handle it, 
+                                // but Firestore handles arrayUnion on non-existent fields by creating them.
+                                Log.e("RequestDoctor", "Failed to send request", e)
+                            }
+                    } else {
+                        Log.e("RequestDoctor", "User found but not a doctor")
+                    }
+                } else {
+                    Log.e("RequestDoctor", "Doctor not found with code: $doctorCode")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("RequestDoctor", "Error finding doctor", e)
+            }
     }
 }
 

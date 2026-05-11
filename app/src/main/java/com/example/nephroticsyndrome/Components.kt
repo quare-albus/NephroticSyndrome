@@ -1,7 +1,9 @@
 package com.example.nephroticsyndrome
 
+import android.util.Log
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +23,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +40,8 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -43,12 +49,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.DataModel.User
 import com.example.nephroticsyndrome.DataModel.PatientRecord
 
@@ -71,7 +80,13 @@ fun PatientRecordScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun topBar(scrollBehavior: TopAppBarScrollBehavior, settingFunction: () -> Unit){
+fun TopBar(user: User, scrollBehavior: TopAppBarScrollBehavior, settingFunction: () -> Unit) {
+    val title = if (user.userType == UserType.Doctor) {
+        "Dr. ${user.name} (${user.userCode})"
+    } else {
+        "DipDiary"
+    }
+
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -79,9 +94,10 @@ fun topBar(scrollBehavior: TopAppBarScrollBehavior, settingFunction: () -> Unit)
         ),
         title = {
             Text(
-                "DipDiary",
+                title,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium
             )
         },
         navigationIcon = {
@@ -332,7 +348,58 @@ fun EntryDialog(onDismissRequest: () -> Unit, onNewRecordEntry: (PatientRecord) 
 
 //Side Navigation Bar for sign out and user account delete functionality
 @Composable
-fun NavDrawerContent(signOut :() -> Unit = {}, deleteAccount :() -> Unit = {}) {
+fun ChooseDoctorDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
+    var doctorCode by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose Doctor") },
+        text = {
+            Column {
+                Text("Enter the 10-digit alphanumeric code of your doctor:")
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = doctorCode,
+                    onValueChange = {
+                        if (it.length <= 10) doctorCode = it.uppercase()
+                    },
+                    label = { Text("Doctor Code") },
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (doctorCode.length == 10) {
+                        onSubmit(doctorCode)
+                    }
+                },
+                enabled = doctorCode.length == 10
+            ) {
+                Text("Submit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun NavDrawerContent(
+    userType: UserType = UserType.Patient,
+    signOut: () -> Unit = {},
+    deleteAccount: () -> Unit = {},
+    onChooseDoctor: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onPendingRequestsClick: () -> Unit = {}
+) {
     ModalDrawerSheet {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -340,12 +407,44 @@ fun NavDrawerContent(signOut :() -> Unit = {}, deleteAccount :() -> Unit = {}) {
         ) {
             Spacer(Modifier.height(12.dp))
             Text(
-                "Settings",
+                "Menu",
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.titleLarge
             )
 
             HorizontalDivider()
+
+            if (userType == UserType.Doctor) {
+                NavigationDrawerItem(
+                    label = { Text("Home") },
+                    selected = false,
+                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    onClick = { onHomeClick() }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Pending Requests") },
+                    selected = false,
+                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    onClick = { onPendingRequestsClick() }
+                )
+            }
+
+            if (userType == UserType.Patient) {
+                NavigationDrawerItem(
+                    label = { Text("Choose Doctor") },
+                    selected = false,
+                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    onClick = { onChooseDoctor() }
+                )
+            }
+
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Settings",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.titleSmall
+            )
 
             NavigationDrawerItem(
                 label = { Text("Sign Out", color = Color.Red) },
@@ -429,17 +528,106 @@ fun PtCard(
 }
 
 @Composable
-fun DoctorRecordScreen() {
-    val ptList = listOf(
-        User("Ethan Singh", 55, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male"),
-        User("Mia Garcia", 56, "Male")
-    )
+fun DoctorRecordScreen(
+    user: User
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Welcome, Dr. ${user.name}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Your Doctor Code: ${user.userCode}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
 
-    PtLazyMatrix(ptList)
+        Text(
+            text = "Your Patients",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        val ptList = listOf(
+            User("Ethan Singh", 55, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male"),
+            User("Mia Garcia", 56, "Male")
+        )
+
+        PtLazyMatrix(ptList)
+    }
+}
+
+@Composable
+fun PendingRequestsScreen(
+    pendingRequests: List<String>,
+    onApprove: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text(
+            text = "Pending Patient Requests",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Log.d("pendingRequests", pendingRequests.toString())
+
+        if (pendingRequests.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No pending requests",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.Gray
+                )
+            }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(pendingRequests) { patientCode ->
+                    PendingRequestItem(patientCode, onApprove)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PendingRequestItem(patientCode: String, onApprove: (String) -> Unit) {
+    Log.d("PendingRequestItem", patientCode)
+    Text(text = patientCode,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(bottom = 8.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Patient Code: $patientCode", style = MaterialTheme.typography.bodyLarge)
+            Button(onClick = { onApprove(patientCode) }) {
+                Text("Approve")
+            }
+        }
+    }
 }

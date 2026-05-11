@@ -63,8 +63,15 @@ class AuthViewModel : ViewModel() {
         )
     }
 
-    fun onUserTypeChange(){
-        _isPt.value = !_isPt.value
+    fun onUserTypeChange() {
+        _isPt.update { !it }
+        _userAuth.update { old ->
+            old.copy(
+                user = old.user.copy(
+                    userType = if (_isPt.value) UserType.Patient else UserType.Doctor
+                )
+            )
+        }
     }
 
     fun signInPatient() {
@@ -102,7 +109,7 @@ class AuthViewModel : ViewModel() {
     fun addNewPatient(patientAuth: PatientAuth, uid: String){
         val userCode = generateDeterministicCode(patientAuth.user.name, patientAuth.user.userType.toString())
         //creating hashmap
-        val patientInfoHash = hashMapOf(
+        val patientInfoHash = hashMapOf<String, Any>(
             "name" to patientAuth.user.name,
             "age" to patientAuth.user.age,
             "sex" to patientAuth.user.sex,
@@ -110,6 +117,11 @@ class AuthViewModel : ViewModel() {
             "uid" to uid,
             "userCode" to userCode
         )
+
+        if (patientAuth.user.userType == UserType.Doctor) {
+            patientInfoHash["pendingRequests"] = emptyList<String>()
+            patientInfoHash["approvedPatients"] = emptyList<String>()
+        }
 
         //setting up instance
         val db = Firebase.firestore

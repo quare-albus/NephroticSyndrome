@@ -1,6 +1,7 @@
 package com.example.nephroticsyndrome
 
 import android.util.Log
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -62,18 +63,24 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Dialogbox visibility variable
+    // Doctor screen navigation state
+    var doctorScreen by remember { mutableStateOf("Home") }
+
+    // Dialogbox visibility variables
     var showEntryDialog by remember { mutableStateOf(false) }
+    var showChooseDoctorDialog by remember { mutableStateOf(false) }
 
     // TopAppBar scroll behaviour variable
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     val userInfo by mainViewModel.userInfo.collectAsState()
     val patientRecords by mainViewModel.patientRecords.collectAsState()
+    val pendingRequests by mainViewModel.pendingRequests.collectAsState()
 
     ModalNavigationDrawer(
         drawerContent = {
             NavDrawerContent(
+                userType = userInfo.userType,
                 signOut = {
                     mainViewModel.signOut {
                         currentUser = null
@@ -83,6 +90,24 @@ fun MainScreen(
                     mainViewModel.deleteUser {
                         currentUser = null
                     }
+                },
+                onChooseDoctor = {
+                    scope.launch {
+                        drawerState.close()
+                        showChooseDoctorDialog = true
+                    }
+                },
+                onHomeClick = {
+                    scope.launch {
+                        doctorScreen = "Home"
+                        drawerState.close()
+                    }
+                },
+                onPendingRequestsClick = {
+                    scope.launch {
+                        doctorScreen = "PendingRequests"
+                        drawerState.close()
+                    }
                 }
             )
         },
@@ -91,15 +116,17 @@ fun MainScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { showEntryDialog = true },
-                    containerColor = Color.Black
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add")
+                if (userInfo.userType == UserType.Patient) {
+                    FloatingActionButton(
+                        onClick = { showEntryDialog = true },
+                        containerColor = Color.Black
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add")
+                    }
                 }
             },
             topBar = {
-                topBar(scrollBehavior) {
+                TopBar(userInfo, scrollBehavior) {
                     scope.launch {
                         if (drawerState.isClosed) {
                             drawerState.open()
@@ -110,14 +137,22 @@ fun MainScreen(
                 }
             },
         ) { innerPadding ->
-            if (userInfo.userType == UserType.Patient) {
-                PatientRecordScreen(
-                    userInfo,
-                    patientRecords,
-                    modifier = Modifier.padding(innerPadding)
-                )
-            } else {
-                DoctorRecordScreen()
+            Column(modifier = Modifier.padding(innerPadding)) {
+                if (userInfo.userType == UserType.Patient) {
+                    PatientRecordScreen(
+                        userInfo,
+                        patientRecords
+                    )
+                } else {
+                    if (doctorScreen == "Home") {
+                        DoctorRecordScreen(userInfo)
+                    } else {
+                        PendingRequestsScreen(
+                            pendingRequests = pendingRequests,
+                            onApprove = { mainViewModel.approvePatient(it) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -128,5 +163,15 @@ fun MainScreen(
             showEntryDialog = false
             Log.d("Debug Entry Patient Record", patientRecord.toString())
         }
+    }
+
+    if (showChooseDoctorDialog) {
+        ChooseDoctorDialog(
+            onDismiss = { showChooseDoctorDialog = false },
+            onSubmit = { doctorCode ->
+                mainViewModel.requestDoctor(doctorCode)
+                showChooseDoctorDialog = false
+            }
+        )
     }
 }
