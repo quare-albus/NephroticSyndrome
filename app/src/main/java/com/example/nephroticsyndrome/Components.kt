@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -32,7 +33,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,8 +65,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.nephroticsyndrome.DataModel.Medication
 import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.DataModel.User
 import com.example.nephroticsyndrome.DataModel.PatientRecord
@@ -257,13 +265,20 @@ fun TableCell(text: String, weight: Float) {
 @Composable
 fun NewEntryForm(
     modifier: Modifier = Modifier,
+    medications: List<Medication> = emptyList(),
     onAddEntry: (PatientRecord) -> Unit = { }
 ) {
     var date by remember { mutableStateOf("02/02/2026") }
     var time by remember { mutableStateOf("05:07 PM") }
     var urinePrtn by remember { mutableStateOf("Neg") }
-    var medication by remember { mutableStateOf("") }
+    var medicationSearch by remember { mutableStateOf("") }
+    var selectedMedications by remember { mutableStateOf(setOf<String>()) }
     var otherProblems by remember { mutableStateOf("") }
+
+    var expanded by remember { mutableStateOf(false) }
+    val filteredMedications = medications.filter {
+        it.displayName.contains(medicationSearch, ignoreCase = true)
+    }
 
     Column(
         modifier = modifier
@@ -309,14 +324,75 @@ fun NewEntryForm(
                 singleLine = true
             )
 
-            OutlinedTextField(
-                value = medication,
-                onValueChange = { medication = it },
-                label = { Text("Medication") },
-                placeholder = { Text("Name and dose") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+            @OptIn(ExperimentalMaterial3Api::class)
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.weight(1f)
+            ) {
+                OutlinedTextField(
+                    value = medicationSearch,
+                    onValueChange = {
+                        medicationSearch = it
+                        expanded = true
+                    },
+                    label = { Text("Add Medication") },
+                    placeholder = { Text("Name and dose") },
+                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true).fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    filteredMedications.forEach { suggestion ->
+                        DropdownMenuItem(
+                            text = { Text(suggestion.displayName) },
+                            onClick = {
+                                selectedMedications = selectedMedications + suggestion.displayName
+                                medicationSearch = ""
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        if (selectedMedications.isNotEmpty()) {
+            Text(
+                text = "Selected Medications:",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.Gray
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                selectedMedications.forEach { med ->
+                    AssistChip(
+                        onClick = { },
+                        label = { Text(med, style = MaterialTheme.typography.labelSmall) },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Remove",
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { selectedMedications = selectedMedications - med }
+                            )
+                        },
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+            }
         }
 
         OutlinedTextField(
@@ -333,7 +409,17 @@ fun NewEntryForm(
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            onClick = { onAddEntry(PatientRecord(date,time,urinePrtn, medication,otherProblems)) },
+            onClick = {
+                onAddEntry(
+                    PatientRecord(
+                        date,
+                        time,
+                        urinePrtn,
+                        selectedMedications.joinToString(", "),
+                        otherProblems
+                    )
+                )
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add entry")
@@ -343,17 +429,26 @@ fun NewEntryForm(
 
 // Dialog box for the entry form
 @Composable
-fun EntryDialog(onDismissRequest: () -> Unit, onNewRecordEntry: (PatientRecord) -> Unit) {
+fun EntryDialog(
+    onDismissRequest: () -> Unit,
+    medications: List<Medication> = emptyList(),
+    onNewRecordEntry: (PatientRecord) -> Unit
+) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(450.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            NewEntryForm {patientRecord ->
-                onNewRecordEntry(patientRecord)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                NewEntryForm(medications = medications) { patientRecord ->
+                    onNewRecordEntry(patientRecord)
+                }
             }
         }
     }

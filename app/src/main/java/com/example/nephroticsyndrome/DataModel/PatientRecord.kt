@@ -7,3 +7,10 @@ data class PatientRecord (
     val medication: String,
     val symptoms: String
 )
+
+data class Medication(
+    val name: String,
+    val dosage: String
+) {
+    val displayName: String get() = "$name ($dosage)"
+}

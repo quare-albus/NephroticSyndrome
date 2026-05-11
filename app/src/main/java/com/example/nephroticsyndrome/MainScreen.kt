@@ -75,6 +75,7 @@ fun MainScreen(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     val userInfo by mainViewModel.userInfo.collectAsState()
+    val medications by mainViewModel.medications.collectAsState()
     val patientRecords by mainViewModel.patientRecords.collectAsState()
     val selectedPatientRecords by mainViewModel.selectedPatientRecords.collectAsState()
     val pendingRequests by mainViewModel.pendingRequests.collectAsState()
@@ -181,7 +182,10 @@ fun MainScreen(
     }
 
     if (showEntryDialog) {
-        EntryDialog({ showEntryDialog = false }) { patientRecord ->
+        EntryDialog(
+            onDismissRequest = { showEntryDialog = false },
+            medications = medications
+        ) { patientRecord ->
             mainViewModel.AddPatientRecord(patientRecord)
             showEntryDialog = false
             Log.d("Debug Entry Patient Record", patientRecord.toString())

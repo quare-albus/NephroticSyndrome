@@ -1,9 +1,11 @@
 package com.example.nephroticsyndrome
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import com.example.nephroticsyndrome.DataModel.User
 import com.example.nephroticsyndrome.DataModel.PatientRecord
+import com.example.nephroticsyndrome.DataModel.Medication
 import com.example.nephroticsyndrome.DataModel.UserType
 import com.example.nephroticsyndrome.DataModel.toUserType
 import com.google.firebase.Firebase
@@ -15,8 +17,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val _medications = MutableStateFlow<List<Medication>>(emptyList())
+    val medications: StateFlow<List<Medication>> = _medications.asStateFlow()
+
     private val _patientRecords = MutableStateFlow<List<PatientRecord>>(emptyList())
     val patientRecords: StateFlow<List<PatientRecord>> = _patientRecords.asStateFlow()
 
@@ -71,7 +78,28 @@ class MainViewModel : ViewModel() {
 
         //update patient Info
         getUserInfo()
+        loadMedications()
+    }
 
+    private fun loadMedications() {
+        val medicationsList = mutableListOf<Medication>()
+        try {
+            val inputStream = getApplication<Application>().resources.openRawResource(R.raw.medications)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            // Skip header
+            reader.readLine()
+            var line: String? = reader.readLine()
+            while (line != null) {
+                val parts = line.split(",")
+                if (parts.size >= 2) {
+                    medicationsList.add(Medication(parts[0], parts[1]))
+                }
+                line = reader.readLine()
+            }
+            _medications.value = medicationsList
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error loading medications from CSV", e)
+        }
     }
 
     fun getUserInfo() {
