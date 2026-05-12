@@ -1,0 +1,1791 @@
+---
+layout: null
+title: Dashboard
+permalink: /dashboard/
+---
+
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+
+            .navbar-title {
+                font-size: 18px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .navbar-user {
+                width: 100%;
+                justify-content: space-between;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 10px 12px;
+            }
+
+            .navbar-title {
+                font-size: 16px;
+            }
+
+            .navbar-user {
+                font-size: 12px;
+            }
+        }
+
+        .logout-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px 15px;
+            }
+        }
+
+        .welcome-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .welcome-section h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .welcome-section {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .welcome-section h2 {
+                font-size: 20px;
+            }
+        }
+
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 640px) {
+            .user-info-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .user-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card h3 {
+            color: #667eea;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card p {
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        @media (max-width: 640px) {
+            .info-card {
+                padding: 15px;
+            }
+
+            .info-card p {
+                font-size: 16px;
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .error-message {
+            background-color: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 4px solid #c33;
+        }
+
+        .error-section {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #c33;
+            margin-bottom: 20px;
+        }
+
+        .records-section {
+            margin-top: 40px;
+        }
+
+        .records-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .records-header h3 {
+            color: #333;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        @media (max-width: 640px) {
+            .records-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .records-header h3 {
+                font-size: 18px;
+            }
+
+            .btn-add-record {
+                width: 100%;
+            }
+        }
+
+        .btn-add-record {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-add-record:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .records-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .records-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .records-table th {
+            background-color: #f5f5f5;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .records-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .records-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        @media (max-width: 640px) {
+            .records-table {
+                overflow-x: auto;
+                border-radius: 8px;
+            }
+
+            .records-table th {
+                padding: 12px 8px;
+                font-size: 12px;
+            }
+
+            .records-table td {
+                padding: 12px 8px;
+                font-size: 12px;
+            }
+        }
+
+        .records-empty {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @media (max-width: 640px) {
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 95vh;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .modal-content {
+                width: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 640px) {
+            .form-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .btn-cancel,
+            .btn-submit-record {
+                width: 100%;
+            }
+        }
+
+        .btn-cancel {
+            background-color: #f0f0f0;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-submit-record {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit-record:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit-record:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .doctor-only-message {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            border-left: 4px solid #1976d2;
+        }
+
+        .connect-section {
+            margin-top: 40px;
+        }
+
+        .connect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .connect-header h3 {
+            color: #333;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .btn-connect {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-connect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .connect-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .connect-info p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .doctor-section {
+            margin-top: 40px;
+        }
+
+        .doctor-header h3 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .pending-requests, .approved-patients {
+            margin-bottom: 30px;
+        }
+
+        .pending-requests h4, .approved-patients h4 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .requests-empty, .patients-empty {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .request-card, .patient-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .request-info, .patient-info {
+            flex: 1;
+        }
+
+        .request-info h5, .patient-info h5 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .request-details, .patient-details {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-reject {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .suggestions-list {
+            margin-top: 8px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .suggestion-item {
+            background: #f4f6ff;
+            border: 1px solid #dde2ff;
+            color: #333;
+            padding: 10px 12px;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #e7ecff;
+            transform: translateY(-1px);
+        }
+
+        .selected-medications {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .selected-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #eef3ff;
+            color: #2d3a6f;
+            border-radius: 999px;
+            font-size: 13px;
+        }
+
+        .selected-pill button {
+            background: transparent;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+        }
+
+        .no-suggestions {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn-cancel {
+            background-color: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e9e9e9;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 640px) {
+            .connect-header, .records-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .connect-header h3, .records-header h3 {
+                text-align: center;
+                font-size: 18px;
+            }
+
+            .btn-connect, .btn-add-record {
+                width: 100%;
+                padding: 12px;
+            }
+
+            .request-card, .patient-card {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .request-actions {
+                justify-content: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20% auto;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-cancel, .btn-submit {
+                width: 100%;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .connect-section, .doctor-section {
+                margin-top: 30px;
+            }
+
+            .connect-header h3, .records-header h3, .doctor-header h3 {
+                font-size: 16px;
+            }
+
+            .connect-info {
+                padding: 12px;
+            }
+
+            .connect-info p {
+                font-size: 13px;
+            }
+
+            .pending-requests h4, .approved-patients h4 {
+                font-size: 15px;
+            }
+
+            .request-card, .patient-card {
+                padding: 15px;
+            }
+
+            .request-info h5, .patient-info h5 {
+                font-size: 15px;
+            }
+
+            .request-details, .patient-details {
+                font-size: 13px;
+            }
+
+            .btn-approve, .btn-reject {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .modal-content {
+                width: 98%;
+                margin: 10% auto;
+            }
+
+            .modal-header h3 {
+                font-size: 16px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+    </style>
+    <div class="navbar">
+        <div class="navbar-title">Nephrotic Syndrome Dashboard</div>
+        <div class="navbar-user">
+            <span id="userEmail"></span>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            <button class="logout-btn" style="background-color: rgba(244, 67, 54, 0.2); border-color: rgba(244, 67, 54, 0.3);" onclick="handleDeleteAccount()">Delete Account</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-section">
+            <div id="loadingIndicator" class="loading">
+                Loading your information...
+            </div>
+            <div id="contentArea" style="display: none;">
+                <h2>Welcome, <span id="userName"></span>!</h2>
+                <p id="userGreeting" style="color: #666; margin-top: 10px;"></p>
+                
+                <div class="user-info-grid">
+                    <div class="info-card">
+                        <h3>User Type</h3>
+                        <p id="userType">-</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Age</h3>
+                        <p id="userAge">-</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Sex</h3>
+                        <p id="userSex">-</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>User Code</h3>
+                        <p id="userCode">-</p>
+                    </div>
+                </div>
+
+                <!-- Patient Records Section -->
+                <div class="records-section" id="recordsSection" style="display: none;">
+                    <div class="records-header">
+                        <h3>Your Health Records</h3>
+                        <button class="btn-add-record" onclick="openAddRecordModal()">+ Add Record</button>
+                    </div>
+
+                    <div id="recordsContainer">
+                        <div class="records-empty">
+                            <p>No records yet. Click "Add Record" to create your first entry.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Connect Section -->
+                <div class="connect-section" id="connectSection" style="display: none;">
+                    <div class="connect-header">
+                        <h3>Connect with Doctor</h3>
+                        <button class="btn-connect" onclick="openConnectDoctorModal()">Connect with Doctor</button>
+                    </div>
+                    <div class="connect-info">
+                        <p>Enter your doctor's 10-digit code to request a connection. Your doctor will need to approve your request.</p>
+                    </div>
+                </div>
+
+                <!-- Doctor Patients Section -->
+                <div class="doctor-section" id="doctorSection" style="display: none;">
+                    <div class="doctor-header">
+                        <h3>Patient Management</h3>
+                    </div>
+
+                    <!-- Pending Requests -->
+                    <div class="pending-requests" id="pendingRequestsSection">
+                        <h4>Pending Requests</h4>
+                        <div id="pendingRequestsContainer">
+                            <div class="requests-empty">
+                                <p>No pending requests.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Approved Patients -->
+                    <div class="approved-patients" id="approvedPatientsSection">
+                        <h4>Your Patients</h4>
+                        <div id="approvedPatientsContainer">
+                            <div class="patients-empty">
+                                <p>No approved patients yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doctor Message -->
+                <div id="doctorMessage" style="display: none;">
+                    <div class="doctor-only-message">
+                        <p>As a doctor, you can view patient records when patients connect with you.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="errorArea" style="display: none;">
+                <div class="error-section">
+                    <strong>Error:</strong> <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connect Doctor Modal -->
+        <div id="connectDoctorModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Connect with Doctor</h3>
+                    <span class="close" onclick="closeConnectDoctorModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="connectDoctorForm">
+                        <div class="form-group">
+                            <label for="doctorCode">Doctor Code (10 digits):</label>
+                            <input type="text" id="doctorCode" name="doctorCode" maxlength="10" pattern="[0-9]{10}" required placeholder="Enter 10-digit doctor code">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-cancel" onclick="closeConnectDoctorModal()">Cancel</button>
+                            <button type="submit" class="btn-submit">Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="recordModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>Add Record</div>
+                    <button type="button" class="modal-close" onclick="closeAddRecordModal()">✕</button>
+                </div>
+                <form id="recordForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recordDate">Date</label>
+                            <input type="date" id="recordDate" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="recordTime">Time</label>
+                            <input type="time" id="recordTime" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="urineProtein">Urine Protein</label>
+                        <select id="urineProtein" required>
+                            <option value="">Select urine protein</option>
+                            <option value="Neg">Neg</option>
+                            <option value="Trace">Trace</option>
+                            <option value="1+">1+</option>
+                            <option value="2+">2+</option>
+                            <option value="3+">3+</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="medicationSearch">Medication</label>
+                        <input type="text" id="medicationSearch" placeholder="Search medication or add manually" autocomplete="off" />
+                        <div id="medicationSuggestions" class="suggestions-list"></div>
+                        <div id="selectedMedications" class="selected-medications"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="symptoms">Symptoms / Notes</label>
+                        <textarea id="symptoms" rows="4" placeholder="Notes, symptoms, other problems"></textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" class="btn-cancel" onclick="closeAddRecordModal()">Cancel</button>
+                        <button type="submit" class="btn-submit-record">Save Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWFixNFXCAxvbUBUDlbaXjwoma5331Vsc",
+            authDomain: "dipdiary-bd04e.firebaseapp.com",
+            projectId: "dipdiary-bd04e",
+            storageBucket: "dipdiary-bd04e.firebasestorage.app",
+            messagingSenderId: "33819150819",
+            appId: "1:33819150819:android:4e9b137fb828596fef38d6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserType = null;
+        let currentUserId = null;
+        let medicationOptions = [];
+        let selectedMedications = [];
+
+        window.handleLogout = handleLogout;
+        window.handleDeleteAccount = handleDeleteAccount;
+        window.openAddRecordModal = openAddRecordModal;
+        window.closeAddRecordModal = closeAddRecordModal;
+        window.handleAddRecord = handleAddRecord;
+        window.openConnectDoctorModal = openConnectDoctorModal;
+        window.closeConnectDoctorModal = closeConnectDoctorModal;
+        window.handleConnectDoctor = handleConnectDoctor;
+        window.approvePatient = approvePatient;
+        window.rejectPatient = rejectPatient;
+        window.closePatientRecordsModal = closePatientRecordsModal;
+        window.addMedicationSuggestion = addMedicationSuggestion;
+        window.removeSelectedMedication = removeSelectedMedication;
+
+        loadMedicationsCSV();
+
+        async function loadMedicationsCSV() {
+            try {
+                const csvUrl = new URL('../medications.csv', window.location.href).href;
+                const response = await fetch(csvUrl);
+                if (!response.ok) {
+                    throw new Error('Unable to load medication list');
+                }
+                const text = await response.text();
+                const rows = text.trim().split(/\r?\n/).slice(1);
+                medicationOptions = rows
+                    .map((line) => line.split(',').map((value) => value.trim()))
+                    .filter((parts) => parts.length >= 2 && parts[0] && parts[1])
+                    .map(([name, dosage]) => ({ name, dosage, displayName: `${name} (${dosage})` }));
+            } catch (error) {
+                console.error('Error loading medications list:', error);
+            }
+        }
+
+        function renderMedicationSuggestions(query) {
+            const suggestionsContainer = document.getElementById('medicationSuggestions');
+            const normalizedQuery = query.trim().toLowerCase();
+            if (!suggestionsContainer) return;
+            if (!normalizedQuery) {
+                suggestionsContainer.innerHTML = '';
+                return;
+            }
+
+            const matched = medicationOptions.filter((item) =>
+                item.name.toLowerCase().includes(normalizedQuery) ||
+                item.dosage.toLowerCase().includes(normalizedQuery)
+            ).slice(0, 6);
+
+            if (matched.length === 0) {
+                suggestionsContainer.innerHTML = '<div class="no-suggestions">No matching medications found. Press Enter to add manually.</div>';
+                return;
+            }
+
+            suggestionsContainer.innerHTML = matched
+                .map((item) =>
+                    `<button type="button" class="suggestion-item" onclick="addMedicationSuggestion('${item.displayName.replace(/'/g, "\\'")}')">${item.displayName}</button>`
+                )
+                .join('');
+        }
+
+        function addMedicationSuggestion(displayName) {
+            if (!displayName) return;
+            if (!selectedMedications.includes(displayName)) {
+                selectedMedications.push(displayName);
+            }
+            const medicationSearch = document.getElementById('medicationSearch');
+            if (medicationSearch) {
+                medicationSearch.value = '';
+            }
+            renderSelectedMedications();
+            renderMedicationSuggestions('');
+        }
+
+        function renderSelectedMedications() {
+            const selectedContainer = document.getElementById('selectedMedications');
+            if (!selectedContainer) return;
+            if (selectedMedications.length === 0) {
+                selectedContainer.innerHTML = '';
+                return;
+            }
+            selectedContainer.innerHTML = selectedMedications
+                .map((med) =>
+                    `<span class="selected-pill">${med}<button type="button" onclick="removeSelectedMedication('${med.replace(/'/g, "\\'")}')">×</button></span>`
+                )
+                .join('');
+        }
+
+        function removeSelectedMedication(displayName) {
+            selectedMedications = selectedMedications.filter((med) => med !== displayName);
+            renderSelectedMedications();
+        }
+
+        function resetMedicationSelection() {
+            selectedMedications = [];
+            renderSelectedMedications();
+            const medicationSearch = document.getElementById('medicationSearch');
+            if (medicationSearch) {
+                medicationSearch.value = '';
+            }
+            const suggestionsContainer = document.getElementById('medicationSuggestions');
+            if (suggestionsContainer) {
+                suggestionsContainer.innerHTML = '';
+            }
+        }
+
+        // Check authentication and load user data
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                // User is not signed in, redirect to auth
+                window.location.href = '/';
+                return;
+            }
+
+            // Display email
+            document.getElementById('userEmail').textContent = user.email;
+            currentUserId = user.uid;
+
+            try {
+                // Fetch user data from Firestore
+                const userDoc = await getDoc(doc(db, 'UserRegister', user.uid));
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    currentUserType = userData.userType;
+                    
+                    // Populate user information
+                    document.getElementById('userName').textContent = userData.name || 'User';
+                    document.getElementById('userType').textContent = userData.userType || '-';
+                    document.getElementById('userAge').textContent = userData.age || '-';
+                    document.getElementById('userSex').textContent = userData.sex || '-';
+                    document.getElementById('userCode').textContent = userData.userCode || '-';
+                    
+                    // Set greeting based on user type
+                    const greeting = userData.userType === 'Doctor' 
+                        ? 'You are logged in as a Doctor. View your patients and manage requests.' 
+                        : 'You are logged in as a Patient. Track your health records and connect with doctors.';
+                    document.getElementById('userGreeting').textContent = greeting;
+
+                    // Show appropriate section
+                    if (userData.userType === 'Patient') {
+                        document.getElementById('recordsSection').style.display = 'block';
+                        document.getElementById('connectSection').style.display = 'block';
+                        loadPatientRecords(user.uid);
+                    } else if (userData.userType === 'Doctor') {
+                        document.getElementById('doctorSection').style.display = 'block';
+                        loadDoctorData(user.uid);
+                    }
+                    
+                    // Show content and hide loading
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('contentArea').style.display = 'block';
+                } else {
+                    throw new Error('User data not found in database');
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('errorArea').style.display = 'block';
+                document.getElementById('errorMessage').textContent = error.message || 'Failed to load user data. Please try again.';
+            }
+        });
+
+        function loadPatientRecords(uid) {
+            const recordsQuery = query(
+                collection(db, 'UserRegister', uid, 'Records'),
+                orderBy('date', 'desc')
+            );
+
+            onSnapshot(recordsQuery, (snapshot) => {
+                const records = [];
+                snapshot.forEach((doc) => {
+                    records.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                displayRecords(records);
+            }, (error) => {
+                console.error('Error loading records:', error);
+                document.getElementById('recordsContainer').innerHTML = `
+                    <div class="records-empty">
+                        <p>Error loading records. Please try again later.</p>
+                    </div>
+                `;
+            });
+        }
+
+        function displayRecords(records) {
+            const container = document.getElementById('recordsContainer');
+
+            if (records.length === 0) {
+                container.innerHTML = `
+                    <div class="records-empty">
+                        <p>No records yet. Click "Add Record" to create your first entry.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <div class="records-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Urine Protein</th>
+                                <th>Medication</th>
+                                <th>Symptoms/Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            records.forEach((record) => {
+                const medication = record.medication || '-';
+                const symptoms = record.symptoms || '-';
+                tableHTML += `
+                    <tr>
+                        <td>${record.date || '-'}</td>
+                        <td>${record.time || '-'}</td>
+                        <td><strong>${record.urineProtein || '-'}</strong></td>
+                        <td>${medication}</td>
+                        <td>${symptoms}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        function openAddRecordModal() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('recordDate').value = today;
+            document.getElementById('recordTime').value = new Date().toTimeString().slice(0,5);
+            resetMedicationSelection();
+            document.getElementById('recordModal').classList.add('active');
+        }
+
+        function closeAddRecordModal() {
+            document.getElementById('recordModal').classList.remove('active');
+            document.getElementById('recordForm').reset();
+            resetMedicationSelection();
+        }
+
+        async function handleAddRecord(event) {
+            event.preventDefault();
+
+            const date = document.getElementById('recordDate').value;
+            const time = document.getElementById('recordTime').value;
+            const urineProtein = document.getElementById('urineProtein').value;
+            const symptoms = document.getElementById('symptoms').value.trim();
+            const medicationSearch = document.getElementById('medicationSearch').value.trim();
+            const medication = selectedMedications.length > 0 ? selectedMedications.join(', ') : medicationSearch;
+
+            if (!date || !time || !urineProtein) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const recordData = {
+                    date: date,
+                    time: time,
+                    urineProtein: urineProtein,
+                    medication: medication,
+                    symptoms: symptoms,
+                    createdAt: serverTimestamp()
+                };
+
+                const recordsRef = collection(db, 'UserRegister', currentUserId, 'Records');
+                await addDoc(recordsRef, recordData);
+
+                document.getElementById('recordForm').reset();
+                resetMedicationSelection();
+                closeAddRecordModal();
+                alert('Record added successfully!');
+            } catch (error) {
+                console.error('Error adding record:', error);
+                alert('Failed to add record. Please try again.');
+            }
+        }
+
+        // Doctor-Patient Connection Functions
+        function openConnectDoctorModal() {
+            document.getElementById('connectDoctorModal').style.display = 'block';
+            document.getElementById('doctorCode').focus();
+        }
+
+        function closeConnectDoctorModal() {
+            document.getElementById('connectDoctorModal').style.display = 'none';
+            document.getElementById('connectDoctorForm').reset();
+        }
+
+        async function handleConnectDoctor(event) {
+            event.preventDefault();
+
+            const doctorCode = document.getElementById('doctorCode').value.trim();
+
+            if (!doctorCode || doctorCode.length !== 10) {
+                alert('Please enter a valid 10-digit doctor code.');
+                return;
+            }
+
+            try {
+                // Find doctor by userCode
+                const usersRef = collection(db, 'UserRegister');
+                const q = query(usersRef, where('userCode', '==', doctorCode), where('userType', '==', 'Doctor'));
+                const querySnapshot = await getDocs(q);
+
+                let doctorDoc = null;
+                if (!querySnapshot.empty) {
+                    doctorDoc = querySnapshot.docs[0];
+                } else {
+                    // Fallback in case userCode is stored differently as a string or number
+                    const allDoctorsQuery = query(collection(db, 'UserRegister'), where('userType', '==', 'Doctor'));
+                    const allDoctorsSnapshot = await getDocs(allDoctorsQuery);
+                    doctorDoc = allDoctorsSnapshot.docs.find((docItem) => {
+                        const code = String(docItem.data().userCode || '').trim();
+                        return code === doctorCode;
+                    });
+                }
+
+                if (!doctorDoc) {
+                    alert('Doctor not found. Please check the code and try again.');
+                    return;
+                }
+
+                const doctorData = doctorDoc.data();
+
+                // Check if already connected or requested
+                const pendingRequests = doctorData.pendingRequests || [];
+                const approvedPatients = doctorData.approvedPatients || [];
+
+                if (pendingRequests.includes(currentUserId)) {
+                    alert('You have already sent a request to this doctor. Please wait for approval.');
+                    return;
+                }
+
+                if (approvedPatients.includes(currentUserId)) {
+                    alert('You are already connected to this doctor.');
+                    return;
+                }
+
+                // Add patient to doctor's pending requests
+                await updateDoc(doc(db, 'UserRegister', doctorDoc.id), {
+                    pendingRequests: arrayUnion(currentUserId)
+                });
+
+                alert('Connection request sent successfully! The doctor will review your request.');
+                closeConnectDoctorModal();
+
+            } catch (error) {
+                console.error('Error sending connection request:', error);
+                alert('Failed to send connection request. Please try again.');
+            }
+        }
+
+        async function loadDoctorData(doctorId) {
+            try {
+                const doctorDoc = await getDoc(doc(db, 'UserRegister', doctorId));
+                if (!doctorDoc.exists()) return;
+
+                const doctorData = doctorDoc.data();
+                const pendingRequests = doctorData.pendingRequests || [];
+                const approvedPatients = doctorData.approvedPatients || [];
+
+                // Load pending requests
+                if (pendingRequests.length > 0) {
+                    await loadPendingRequests(pendingRequests);
+                }
+
+                // Load approved patients
+                if (approvedPatients.length > 0) {
+                    await loadApprovedPatients(approvedPatients);
+                }
+
+            } catch (error) {
+                console.error('Error loading doctor data:', error);
+            }
+        }
+
+        async function loadPendingRequests(patientIds) {
+            const container = document.getElementById('pendingRequestsContainer');
+            container.innerHTML = '';
+
+            for (const patientId of patientIds) {
+                try {
+                    const patientDoc = await getDoc(doc(db, 'UserRegister', patientId));
+                    if (patientDoc.exists()) {
+                        const patientData = patientDoc.data();
+                        const requestCard = document.createElement('div');
+                        requestCard.className = 'request-card';
+                        requestCard.innerHTML = `
+                            <div class="request-info">
+                                <h5>${patientData.name || 'Unknown Patient'}</h5>
+                                <p class="request-details">Age: ${patientData.age || 'N/A'} | Sex: ${patientData.sex || 'N/A'}</p>
+                            </div>
+                            <div class="request-actions">
+                                <button class="btn-approve" onclick="approvePatient('${patientId}')">Approve</button>
+                                <button class="btn-reject" onclick="rejectPatient('${patientId}')">Reject</button>
+                            </div>
+                        `;
+                        container.appendChild(requestCard);
+                    }
+                } catch (error) {
+                    console.error('Error loading patient data:', error);
+                }
+            }
+        }
+
+        async function loadApprovedPatients(patientIds) {
+            const container = document.getElementById('approvedPatientsContainer');
+            container.innerHTML = '';
+
+            for (const patientId of patientIds) {
+                try {
+                    const patientDoc = await getDoc(doc(db, 'UserRegister', patientId));
+                    if (patientDoc.exists()) {
+                        const patientData = patientDoc.data();
+                        const patientCard = document.createElement('div');
+                        patientCard.className = 'patient-card';
+                        patientCard.style.cursor = 'pointer';
+                        patientCard.innerHTML = `
+                            <div class="patient-info">
+                                <h5>${patientData.name || 'Unknown Patient'}</h5>
+                                <p class="patient-details">Age: ${patientData.age || 'N/A'} | Sex: ${patientData.sex || 'N/A'}</p>
+                                <p style="font-size: 12px; color: #999; margin-top: 5px;">Click to view patient records</p>
+                            </div>
+                        `;
+                        patientCard.addEventListener('click', async () => {
+                            await viewPatientRecords(patientId, patientData);
+                        });
+                        container.appendChild(patientCard);
+                    }
+                } catch (error) {
+                    console.error('Error loading patient data:', error);
+                }
+            }
+        }
+
+        async function viewPatientRecords(patientId, patientData) {
+            try {
+                // Create a modal to show patient records
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.id = 'patientRecordsModal';
+                modal.style.display = 'flex';
+                
+                let recordsHTML = '';
+                const recordsQuery = query(
+                    collection(db, 'UserRegister', patientId, 'Records'),
+                    orderBy('date', 'desc')
+                );
+                
+                const snapshot = await getDocs(recordsQuery);
+                if (snapshot.empty) {
+                    recordsHTML = '<p style="text-align: center; padding: 20px;">No records found for this patient.</p>';
+                } else {
+                    recordsHTML = '<table style="width: 100%; border-collapse: collapse;">';
+                    recordsHTML += '<thead><tr style="border-bottom: 2px solid #ddd;">';
+                    recordsHTML += '<th style="padding: 10px; text-align: left;">Date</th>';
+                    recordsHTML += '<th style="padding: 10px; text-align: left;">Time</th>';
+                    recordsHTML += '<th style="padding: 10px; text-align: left;">Urine Protein</th>';
+                    recordsHTML += '<th style="padding: 10px; text-align: left;">Medication</th>';
+                    recordsHTML += '<th style="padding: 10px; text-align: left;">Symptoms</th>';
+                    recordsHTML += '</tr></thead><tbody>';
+                    
+                    snapshot.forEach((doc) => {
+                        const record = doc.data();
+                        recordsHTML += '<tr style="border-bottom: 1px solid #eee;">';
+                        recordsHTML += `<td style="padding: 10px;">${record.date || '-'}</td>`;
+                        recordsHTML += `<td style="padding: 10px;">${record.time || '-'}</td>`;
+                        recordsHTML += `<td style="padding: 10px;"><strong>${record.urineProtein || '-'}</strong></td>`;
+                        recordsHTML += `<td style="padding: 10px;">${record.medication || '-'}</td>`;
+                        recordsHTML += `<td style="padding: 10px;">${record.symptoms || '-'}</td>`;
+                        recordsHTML += '</tr>';
+                    });
+                    recordsHTML += '</tbody></table>';
+                }
+                
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Patient Records: ${patientData.name}</h3>
+                            <button class="modal-close" onclick="closePatientRecordsModal()">✕</button>
+                        </div>
+                        <div style="padding: 20px; max-height: 500px; overflow-y: auto;">
+                            <div style="margin-bottom: 15px;">
+                                <strong>Age:</strong> ${patientData.age} | <strong>Sex:</strong> ${patientData.sex}
+                            </div>
+                            ${recordsHTML}
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add event listener to close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closePatientRecordsModal();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error viewing patient records:', error);
+                alert('Failed to load patient records. Please try again.');
+            }
+        }
+
+        function closePatientRecordsModal() {
+            const modal = document.getElementById('patientRecordsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function approvePatient(patientId) {
+            try {
+                const doctorRef = doc(db, 'UserRegister', currentUserId);
+
+                // Move from pending to approved
+                await updateDoc(doctorRef, {
+                    pendingRequests: arrayRemove(patientId),
+                    approvedPatients: arrayUnion(patientId)
+                });
+
+                alert('Patient approved successfully!');
+                loadDoctorData(currentUserId); // Refresh the data
+
+            } catch (error) {
+                console.error('Error approving patient:', error);
+                alert('Failed to approve patient. Please try again.');
+            }
+        }
+
+        async function rejectPatient(patientId) {
+            try {
+                const doctorRef = doc(db, 'UserRegister', currentUserId);
+
+                // Remove from pending requests
+                await updateDoc(doctorRef, {
+                    pendingRequests: arrayRemove(patientId)
+                });
+
+                alert('Patient request rejected.');
+                loadDoctorData(currentUserId); // Refresh the data
+
+            } catch (error) {
+                console.error('Error rejecting patient:', error);
+                alert('Failed to reject patient. Please try again.');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error signing out:', error);
+                alert('Error signing out. Please try again.');
+            }
+        }
+
+        async function handleDeleteAccount() {
+            const confirmed = confirm(
+                'Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.'
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('No user is currently logged in.');
+                    return;
+                }
+
+                // Delete user data from Firestore
+                await deleteDoc(doc(db, 'UserRegister', user.uid));
+
+                // Delete user authentication
+                await user.delete();
+
+                alert('Your account has been successfully deleted.');
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error deleting account:', error);
+                if (error.code === 'auth/requires-recent-login') {
+                    alert('Please log out and log back in before deleting your account for security reasons.');
+                } else {
+                    alert('Failed to delete account. Please try again later.');
+                }
+            }
+        }
+
+        // Close modal when clicking outside of it
+        document.getElementById('recordModal').addEventListener('click', (event) => {
+            if (event.target === document.getElementById('recordModal')) {
+                closeAddRecordModal();
+            }
+        });
+
+        // Connect Doctor Form Handler
+        document.getElementById('connectDoctorForm').addEventListener('submit', handleConnectDoctor);
+
+        // Add Record Form Handler
+        document.getElementById('recordForm').addEventListener('submit', handleAddRecord);
+
+        const medicationSearchInput = document.getElementById('medicationSearch');
+        if (medicationSearchInput) {
+            medicationSearchInput.addEventListener('input', (event) => renderMedicationSuggestions(event.target.value));
+            medicationSearchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const value = event.target.value.trim();
+                    if (value) {
+                        addMedicationSuggestion(value);
+                    }
+                }
+            });
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const connectModal = document.getElementById('connectDoctorModal');
+            const recordModal = document.getElementById('recordModal');
+            if (event.target == connectModal) {
+                closeConnectDoctorModal();
+            }
+            if (event.target == recordModal) {
+                closeAddRecordModal();
+            }
+        }
+    </script>
+</body>
+</html>
