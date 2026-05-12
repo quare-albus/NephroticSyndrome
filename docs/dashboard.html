@@ -1251,7 +1251,7 @@ permalink: /dashboard/
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 // User is not signed in, redirect to auth
-                window.location.href = '/';
+                window.location.href = '../';
                 return;
             }
 
@@ -1707,7 +1707,7 @@ permalink: /dashboard/
         async function handleLogout() {
             try {
                 await signOut(auth);
-                window.location.href = '/';
+                window.location.href = '../';
             } catch (error) {
                 console.error('Error signing out:', error);
                 alert('Error signing out. Please try again.');
@@ -1737,7 +1737,7 @@ permalink: /dashboard/
                 await user.delete();
 
                 alert('Your account has been successfully deleted.');
-                window.location.href = '/';
+                window.location.href = '../';
             } catch (error) {
                 console.error('Error deleting account:', error);
                 if (error.code === 'auth/requires-recent-login') {
