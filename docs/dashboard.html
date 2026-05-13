@@ -1054,8 +1054,8 @@ permalink: /dashboard/
                 <div class="modal-body">
                     <form id="connectDoctorForm">
                         <div class="form-group">
-                            <label for="doctorCode">Doctor Code (10 digits):</label>
-                            <input type="text" id="doctorCode" name="doctorCode" maxlength="10" pattern="[0-9]{10}" required placeholder="Enter 10-digit doctor code">
+                            <label for="doctorCode">Doctor Code (10 characters)</label>
+                            <input type="text" id="doctorCode" name="doctorCode" maxlength="10" pattern="[A-Za-z0-9]{10}" required placeholder="Enter 10-character doctor code" style="text-transform: uppercase;">
                         </div>
                         <div class="modal-actions">
                             <button type="button" class="btn-cancel" onclick="closeConnectDoctorModal()">Cancel</button>
@@ -1446,10 +1446,10 @@ permalink: /dashboard/
         async function handleConnectDoctor(event) {
             event.preventDefault();
 
-            const doctorCode = document.getElementById('doctorCode').value.trim();
+            const doctorCode = document.getElementById('doctorCode').value.trim().toUpperCase();
 
             if (!doctorCode || doctorCode.length !== 10) {
-                alert('Please enter a valid 10-digit doctor code.');
+                alert('Please enter a valid 10-character doctor code.');
                 return;
             }
 
