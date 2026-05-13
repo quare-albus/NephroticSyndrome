@@ -24,8 +24,8 @@ description: >- # this means to ignore newlines until "baseurl:"
   DipLink is a simple and intuitive health tracking application
   designed to help patients and caregivers monitor protein loss,
   medication schedules, and daily symptoms in one place.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/NephroticSyndrome" # the subpath of your site, e.g. /blog
+url: "https://quare-albus.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  quare-albus
 

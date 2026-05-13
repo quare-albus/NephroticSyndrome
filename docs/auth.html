@@ -1,7 +1,7 @@
 ---
 layout: null
 title: Authentication
-permalink: /
+permalink: / 
 ---
 
 <!DOCTYPE html>
@@ -418,7 +418,7 @@ permalink: /
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 showSuccess('Sign in successful! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = "{{ site.baseurl }}/dashboard/";
                 }, 2000);
             } catch (error) {
                 let errorMessage = 'Sign in failed';
@@ -477,7 +477,7 @@ permalink: /
 
                 showSuccess('Account created successfully! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = "{{ site.baseurl }}/dashboard/";
                 }, 2000);
             } catch (error) {
                 let errorMessage = 'Sign up failed';
@@ -533,7 +533,7 @@ permalink: /
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // User is already signed in, redirect to dashboard
-                window.location.href = '/dashboard';
+                window.location.href = "{{ site.baseurl }}/dashboard/";
             }
         });
     </script>
