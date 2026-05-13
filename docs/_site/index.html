@@ -412,7 +412,7 @@
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 showSuccess('Sign in successful! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = '../dashboard';
+                    window.location.href = "/NephroticSyndrome/dashboard/";
                 }, 2000);
             } catch (error) {
                 let errorMessage = 'Sign in failed';
@@ -471,7 +471,7 @@
 
                 showSuccess('Account created successfully! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = '../dashboard';
+                    window.location.href = "/NephroticSyndrome/dashboard/";
                 }, 2000);
             } catch (error) {
                 let errorMessage = 'Sign up failed';
@@ -527,7 +527,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // User is already signed in, redirect to dashboard
-                window.location.href = '../dashboard';
+                window.location.href = "/NephroticSyndrome/dashboard/";
             }
         });
     </script>
