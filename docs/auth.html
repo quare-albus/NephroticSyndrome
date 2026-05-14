@@ -529,11 +529,14 @@ permalink: /
             document.getElementById('authForm').reset();
         }
 
-        // Check if user is already logged in
+        // Redirect only if an authenticated session already exists when the page first loads.
+        let authInitialized = false;
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is already signed in, redirect to dashboard
-                window.location.href = "{{ site.baseurl }}/dashboard/";
+            if (!authInitialized) {
+                authInitialized = true;
+                if (user) {
+                    window.location.href = "{{ site.baseurl }}/dashboard/";
+                }
             }
         });
     </script>
