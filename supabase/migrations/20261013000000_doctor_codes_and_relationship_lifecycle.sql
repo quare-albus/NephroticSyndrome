@@ -42,8 +42,8 @@ DROP TRIGGER IF EXISTS profiles_doctor_code_guard ON public.profiles;
 CREATE TRIGGER profiles_doctor_code_guard BEFORE INSERT OR UPDATE OF name,user_type,user_code ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.enforce_profile_identity_and_doctor_code();
 
--- Re-run this line for existing doctors only when applying to a database that has not yet been backfilled:
--- UPDATE public.profiles SET user_code='MIGRATING_'||pg_catalog.replace(id::text,'-','') WHERE user_type='Doctor';
+-- Existing doctors are backfilled through the same trigger/generator.
+UPDATE public.profiles SET user_code='MIGRATING_'||pg_catalog.replace(id::text,'-','') WHERE user_type='Doctor';
 
 ALTER TABLE public.doctor_requests DROP CONSTRAINT IF EXISTS doctor_requests_status_check;
 ALTER TABLE public.doctor_requests ADD CONSTRAINT doctor_requests_status_check CHECK(status IN ('pending','approved','rejected','revoked','cancelled'));
