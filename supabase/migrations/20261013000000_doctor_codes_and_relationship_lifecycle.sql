@@ -139,6 +139,5 @@ DROP POLICY IF EXISTS "doctors delete relationships" ON public.doctor_patients;
 DROP POLICY IF EXISTS "doctors update relationships" ON public.doctor_patients;
 DROP POLICY IF EXISTS "doctors update own requests" ON public.doctor_requests;
 DROP POLICY IF EXISTS "patients create requests" ON public.doctor_requests;
-REVOKE INSERT,UPDATE,DELETE ON public.doctor_patients FROM anon,authenticated;
-REVOKE INSERT,UPDATE,DELETE ON public.doctor_requests FROM anon,authenticated;
+REVOKE ALL ON public.doctor_patients,public.doctor_requests FROM anon,authenticated;
 GRANT SELECT ON public.doctor_patients,public.doctor_requests TO authenticated;
