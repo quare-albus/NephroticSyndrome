@@ -49,7 +49,6 @@ ALTER TABLE public.doctor_requests DROP CONSTRAINT IF EXISTS doctor_requests_sta
 ALTER TABLE public.doctor_requests ADD CONSTRAINT doctor_requests_status_check CHECK(status IN ('pending','approved','rejected','revoked','cancelled'));
 CREATE INDEX IF NOT EXISTS doctor_requests_doctor_status_created_idx ON public.doctor_requests(doctor_id,status,created_at);
 CREATE INDEX IF NOT EXISTS doctor_requests_patient_status_created_idx ON public.doctor_requests(patient_id,status,created_at);
-CREATE INDEX IF NOT EXISTS doctor_patients_patient_doctor_idx ON public.doctor_patients(patient_id,doctor_id);
 
 CREATE OR REPLACE FUNCTION public.request_doctor_connection(p_code text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
@@ -139,6 +138,11 @@ DROP POLICY IF EXISTS "doctors delete relationships" ON public.doctor_patients;
 DROP POLICY IF EXISTS "doctors update relationships" ON public.doctor_patients;
 DROP POLICY IF EXISTS "doctors update own requests" ON public.doctor_requests;
 DROP POLICY IF EXISTS "patients create requests" ON public.doctor_requests;
+DROP POLICY IF EXISTS "doctors read own requests" ON public.doctor_requests;
+DROP POLICY IF EXISTS "patients read own requests" ON public.doctor_requests;
+CREATE POLICY "participants read connection requests" ON public.doctor_requests
+FOR SELECT TO authenticated
+USING ((SELECT auth.uid()) = patient_id OR (SELECT auth.uid()) = doctor_id);
 REVOKE ALL ON public.doctor_patients,public.doctor_requests FROM anon,authenticated;
 GRANT SELECT ON public.doctor_patients,public.doctor_requests TO authenticated;
 
