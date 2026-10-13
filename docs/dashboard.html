@@ -81,11 +81,14 @@ function connect(){
   try{
    const{error}=await supabase.rpc("request_connection",{p_target_code:$("dc").value.trim().toUpperCase()});
    if(error)throw error;
-   close();notify("Request sent. The doctor must approve it before they can view your records.","success");await patient(profile);
   }catch(err){
-   $("requestFeedback").textContent=err.message||"The request could not be sent. Please check the code and try again.";
-   notify(err.message||"The request could not be sent. Please try again.","error");
-  }finally{button.disabled=false;button.textContent="Send request"}
+   const message=err.message||"The request could not be sent. Please check the code and try again.";
+   $("requestFeedback").textContent=message;notify(message,"error");
+   button.disabled=false;button.textContent="Send request";return;
+  }
+  close();notify("Request sent. The doctor must approve it before they can view your records.","success");
+  try{await patient(profile)}catch(err){console.error("Connection request sent but dashboard refresh failed",err);notify("Request sent, but the dashboard could not refresh. Reload the page to see its status.","error")}
+  button.disabled=false;button.textContent="Send request";
  };
 }
 async function doctor(p){
