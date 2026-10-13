@@ -1,48 +1,8 @@
 -- NephroTrack: unique doctor codes and transactional, bidirectional connection lifecycle.
 -- Applied to Supabase project nsjnkhcmlnshyjblzolh on 2026-10-13.
 
-CREATE OR REPLACE FUNCTION public.generate_doctor_code(p_name text, p_exclude_id uuid DEFAULT NULL)
-RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-DECLARE
-  v_letters text; v_prefix text; v_start integer; v_suffix integer; v_offset integer; v_code text;
-BEGIN
-  v_letters := pg_catalog.upper(pg_catalog.regexp_replace(pg_catalog.coalesce(p_name, ''), '[^A-Za-z]', '', 'g'));
-  v_prefix := pg_catalog.left(v_letters || 'XXX', 3);
-  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(v_prefix)::bigint);
-  v_start := pg_catalog.floor(pg_catalog.random() * 100)::integer;
-  FOR v_offset IN 0..99 LOOP
-    v_suffix := (v_start + v_offset) % 100;
-    v_code := v_prefix || pg_catalog.lpad(v_suffix::text, 2, '0');
-    IF NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.user_code=v_code AND (p_exclude_id IS NULL OR p.id<>p_exclude_id)) THEN RETURN v_code; END IF;
-  END LOOP;
-  RAISE EXCEPTION 'All 100 doctor codes for prefix % are in use. Choose a username with different first three letters.',v_prefix USING ERRCODE='23505';
-END; $$;
-REVOKE ALL ON FUNCTION public.generate_doctor_code(text,uuid) FROM PUBLIC,anon,authenticated;
-
-CREATE OR REPLACE FUNCTION public.enforce_profile_identity_and_doctor_code()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-BEGIN
-  IF NEW.user_type NOT IN ('Patient','Doctor','Unknown') THEN RAISE EXCEPTION 'Invalid account type.' USING ERRCODE='23514'; END IF;
-  IF TG_OP='UPDATE' THEN
-    IF NEW.user_type IS DISTINCT FROM OLD.user_type AND NOT (OLD.user_type='Unknown' AND NEW.user_type IN ('Patient','Doctor')) THEN
-      RAISE EXCEPTION 'Account type cannot be changed after setup.' USING ERRCODE='42501';
-    END IF;
-    IF NEW.user_type='Doctor' THEN
-      IF OLD.user_type IS DISTINCT FROM 'Doctor' OR NEW.name IS DISTINCT FROM OLD.name OR NEW.user_code IS DISTINCT FROM OLD.user_code THEN
-        NEW.user_code:=public.generate_doctor_code(NEW.name,OLD.id);
-      ELSE NEW.user_code:=OLD.user_code; END IF;
-    ELSE NEW.user_code:=OLD.user_code; END IF;
-  ELSIF NEW.user_type='Doctor' THEN
-    NEW.user_code:=public.generate_doctor_code(NEW.name,NEW.id);
-  END IF;
-  RETURN NEW;
-END; $$;
-REVOKE ALL ON FUNCTION public.enforce_profile_identity_and_doctor_code() FROM PUBLIC,anon,authenticated;
-DROP TRIGGER IF EXISTS profiles_doctor_code_guard ON public.profiles;
-CREATE TRIGGER profiles_doctor_code_guard BEFORE INSERT OR UPDATE OF name,user_type,user_code ON public.profiles
-FOR EACH ROW EXECUTE FUNCTION public.enforce_profile_identity_and_doctor_code();
-
--- Existing doctors are backfilled through the same trigger/generator.
+-- The existing enforce_profile_user_code_trigger uses the collision-safe
+-- generate_doctor_user_code helper. Updating user_code invokes it to backfill doctors.
 UPDATE public.profiles SET user_code='MIGRATING_'||pg_catalog.replace(id::text,'-','') WHERE user_type='Doctor';
 
 ALTER TABLE public.doctor_requests DROP CONSTRAINT IF EXISTS doctor_requests_status_check;
