@@ -41,7 +41,7 @@ GRANT EXECUTE ON FUNCTION public.request_connection(text) TO authenticated;
 
 -- Compatibility alias for the older patient-only frontend during rollout.
 CREATE OR REPLACE FUNCTION public.request_doctor_connection(p_code text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
 DECLARE v_uid uuid:=auth.uid(); v_role text;
 BEGIN
   SELECT p.user_type INTO v_role FROM public.profiles p WHERE p.id=v_uid;
