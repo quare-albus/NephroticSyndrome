@@ -27,9 +27,9 @@ BEGIN
     IF v_status='approved' AND EXISTS(SELECT 1 FROM public.doctor_patients dp WHERE dp.doctor_id=v_doctor_id AND dp.patient_id=v_uid) THEN
       RAISE EXCEPTION 'You are already connected to this doctor.' USING ERRCODE='P0001';
     END IF;
-    UPDATE public.doctor_requests SET status='pending',created_at=pg_catalog.now() WHERE id=v_request_id;
+    UPDATE public.doctor_requests SET status='pending',initiated_by=v_uid,created_at=pg_catalog.now() WHERE id=v_request_id;
   ELSE
-    INSERT INTO public.doctor_requests(patient_id,doctor_id,status) VALUES(v_uid,v_doctor_id,'pending') RETURNING id INTO v_request_id;
+    INSERT INTO public.doctor_requests(patient_id,doctor_id,status,initiated_by) VALUES(v_uid,v_doctor_id,'pending',v_uid) RETURNING id INTO v_request_id;
   END IF;
   RETURN pg_catalog.jsonb_build_object('request_id',v_request_id,'status','pending');
 END; $$;
