@@ -141,3 +141,9 @@ DROP POLICY IF EXISTS "doctors update own requests" ON public.doctor_requests;
 DROP POLICY IF EXISTS "patients create requests" ON public.doctor_requests;
 REVOKE ALL ON public.doctor_patients,public.doctor_requests FROM anon,authenticated;
 GRANT SELECT ON public.doctor_patients,public.doctor_requests TO authenticated;
+
+-- Disable stale SECURITY DEFINER endpoints so no alternate connection path bypasses this lifecycle.
+REVOKE ALL ON FUNCTION public.request_connection(text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.respond_to_connection(bigint,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.disconnect_connection(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC,anon,authenticated;
