@@ -150,13 +150,36 @@ function add(){
   renderStrengthMenuOptions();strengthMenu.hidden=false;strengthPicker.setAttribute("aria-expanded","true");closeMenus(strengthMenu);
  }
  async function loadCatalog(){
-  try{
-   const response=await fetch("{{ site.baseurl }}/data/paediatric_medications.csv?v=v1.0.22",{cache:"no-store"});
-   if(!response.ok)throw new Error("Medication list unavailable");
-   const lines=(await response.text()).split(/\r?\n/).filter(Boolean);
-   catalogRows=lines.slice(1).map(line=>{const c=line.split(",");return{name:(c[0]||"").trim(),form:(c[1]||"").trim(),strength:(c.slice(2).join(",")||"").trim()}}).filter(r=>r.name&&r.form);
-   $("medHelp").textContent=catalogRows.length+" medication/formulation/strength suggestions loaded. Start typing a name; formulation and strength options depend on the selected medication.";if(nameInput.value.trim())renderNameMenu();
-  }catch(e){$("medHelp").textContent="Suggestions could not be loaded. You can still enter a medication name and amount in mg."}
+  const urls=[
+   "https://quare-albus.github.io/NephroticSyndrome/data/paediatric_medications.csv?v=v1.0.22",
+   "{{ site.baseurl }}/data/paediatric_medications.csv?v=v1.0.22"
+  ];
+  let lastError=null;
+  for(const url of urls){
+   try{
+    const response=await fetch(url,{cache:"no-store",headers:{"Accept":"text/csv,text/plain,*/*"}});
+    if(!response.ok)throw new Error("CSV request returned HTTP "+response.status);
+    const text=await response.text();
+    if(!text.trim()||text.trimStart().startsWith("<"))throw new Error("The medication catalogue URL did not return CSV data");
+    const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(line=>line.trim());
+    if(lines.length<2)throw new Error("The medication catalogue is empty");
+    const splitCsv=line=>{const out=[];let value="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===","&&!quoted){out.push(value.trim());value=""}else value+=ch}out.push(value.trim());return out};
+    const headers=splitCsv(lines[0]).map(h=>h.toLowerCase().replace(/^\uFEFF/,""));
+    const nameIndex=headers.indexOf("medication_name")>=0?headers.indexOf("medication_name"):headers.indexOf("name");
+    const formIndex=headers.indexOf("formulation")>=0?headers.indexOf("formulation"):headers.indexOf("form");
+    const strengthIndex=headers.indexOf("example_label_strength")>=0?headers.indexOf("example_label_strength"):headers.indexOf("strength");
+    if(nameIndex<0||formIndex<0||strengthIndex<0)throw new Error("CSV columns do not match the medication catalogue schema");
+    const parsed=lines.slice(1).map(line=>{const c=splitCsv(line);return{name:c[nameIndex]||"",form:c[formIndex]||"",strength:c[strengthIndex]||""}}).filter(r=>r.name&&r.form&&r.strength);
+    if(!parsed.length)throw new Error("No valid medication rows were found in the CSV");
+    catalogRows=parsed;
+    $("medHelp").textContent=catalogRows.length+" medication/formulation/strength suggestions loaded. Start typing a name; formulation and strength options depend on the selected medication.";
+    if(nameInput.value.trim())renderNameMenu();
+    return;
+   }catch(e){lastError=e;console.warn("Medication catalogue load failed for",url,e)}
+  }
+  catalogRows=[];
+  $("medHelp").textContent="Medication suggestions could not load. Check your connection or reload this page; manual entry remains available.";
+  console.error("Medication catalogue unavailable",lastError);
  }
  nameInput.addEventListener("input",()=>{
   const typed=nameInput.value.trim();
