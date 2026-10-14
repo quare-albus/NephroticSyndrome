@@ -1,0 +1,53 @@
+medication_name,formulation,example_label_strength
+Paracetamol,Syrup,120 mg/5 mL
+Paracetamol,Syrup,250 mg/5 mL
+Paracetamol,Tablet,125 mg
+Paracetamol,Tablet,250 mg
+Paracetamol,Tablet,500 mg
+Ibuprofen,Syrup,100 mg/5 mL
+Ibuprofen,Tablet,200 mg
+Ibuprofen,Tablet,400 mg
+Amoxicillin,Syrup,125 mg/5 mL
+Amoxicillin,Syrup,250 mg/5 mL
+Amoxicillin,Tablet,250 mg
+Amoxicillin,Tablet,500 mg
+Azithromycin,Syrup,100 mg/5 mL
+Azithromycin,Syrup,200 mg/5 mL
+Azithromycin,Tablet,250 mg
+Azithromycin,Tablet,500 mg
+Cetirizine,Syrup,5 mg/5 mL
+Cetirizine,Tablet,5 mg
+Cetirizine,Tablet,10 mg
+Zinc,Syrup,10 mg/5 mL
+Zinc,Tablet,10 mg
+Zinc,Tablet,20 mg
+Salbutamol,Syrup,2 mg/5 mL
+Salbutamol,Tablet,2 mg
+Salbutamol,Tablet,4 mg
+Prednisolone,Syrup,5 mg/5 mL
+Prednisolone,Tablet,5 mg
+Prednisolone,Tablet,10 mg
+Prednisolone,Tablet,20 mg
+Ondansetron,Syrup,4 mg/5 mL
+Ondansetron,Tablet,4 mg
+Ondansetron,Tablet,8 mg
+Cefixime,Syrup,50 mg/5 mL
+Cefixime,Syrup,100 mg/5 mL
+Cefixime,Tablet,100 mg
+Cefixime,Tablet,200 mg
+Metronidazole,Syrup,100 mg/5 mL
+Metronidazole,Tablet,200 mg
+Metronidazole,Tablet,400 mg
+Cotrimoxazole,Syrup,40 mg trimethoprim + 200 mg sulfamethoxazole/5 mL
+Cotrimoxazole,Tablet,80 mg trimethoprim + 400 mg sulfamethoxazole
+Lactulose,Syrup,3.3 g/5 mL
+Omeprazole,Syrup,2 mg/mL
+Omeprazole,Capsule,10 mg
+Omeprazole,Capsule,20 mg
+ORS,Oral solution,ORS sachet as labelled
+Iron supplement,Syrup,Product-specific concentration
+Iron supplement,Tablet,Product-specific strength
+Vitamin D,Drops,Product-specific concentration
+Vitamin D,Tablet,Product-specific strength
+Multivitamin,Syrup,Product-specific concentration
+Multivitamin,Tablet,Product-specific strength
