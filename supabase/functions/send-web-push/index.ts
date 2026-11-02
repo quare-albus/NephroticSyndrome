@@ -9,7 +9,7 @@ const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const vapidPublic=Deno.env.get("VAPID_PUBLIC_KEY")!;
 const vapidPrivate=Deno.env.get("VAPID_PRIVATE_KEY")!;
-webpush.setVapidDetails("https://quare-albus.github.io/NephroticSyndrome/",vapidPublic,vapidPrivate);
+
 
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
@@ -19,7 +19,7 @@ Deno.serve(async(req)=>{
   if(!token)return json({error:"Missing user session"},401);
   const{data:{user},error:authError}=await admin.auth.getUser(token);
   if(authError||!user)return json({error:"Invalid user session"},401);
-  const body=await req.json();const notificationId=Number(body.notification_id);
+  if(!vapidPublic||!vapidPrivate)return json({error:"VAPID secrets are not configured"},503);\n  webpush.setVapidDetails("https://quare-albus.github.io/NephroticSyndrome/",vapidPublic,vapidPrivate);\n  const body=await req.json();const notificationId=Number(body.notification_id);
   if(!Number.isSafeInteger(notificationId)||notificationId<=0)return json({error:"Invalid notification_id"},400);
   const{data:notification,error:nerr}=await admin.from("notifications").select("id,doctor_id,patient_id,title,message,type,appointment_at").eq("id",notificationId).single();
   if(nerr||!notification)return json({error:"Notification not found"},404);
