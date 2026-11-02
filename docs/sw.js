@@ -1,3 +1,5 @@
+---
+---
 const APP_BASE="/NephroticSyndrome/";
 self.addEventListener("push",event=>{
  let data={title:"Message from your doctor",body:"You have a new notification in NephroTrack.",url:APP_BASE+"dashboard/"};
