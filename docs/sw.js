@@ -1,4 +1,6 @@
 ---
+layout: null
+permalink: /sw.js
 ---
 const APP_BASE="/NephroticSyndrome/";
 self.addEventListener("push",event=>{
